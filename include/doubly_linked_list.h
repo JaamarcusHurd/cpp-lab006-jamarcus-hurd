@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <cstddef>
@@ -6,22 +7,21 @@
 #include <vector>
 
 template <typename T>
-struct DNode {
+struct SNode {
     T value;
-    DNode* prev;
-    DNode* next;
+    SNode* next;
 
-    explicit DNode(const T& v, DNode* p = nullptr, DNode* n = nullptr)
-        : value(v), prev(p), next(n) {}
+    explicit SNode(const T& v, SNode* n = nullptr)
+        : value(v), next(n) {}
 };
 
 template <typename T>
-class DLinkedList {
+class SLinkedList {
 public:
-    DLinkedList();
-    ~DLinkedList();
-    DLinkedList(const DLinkedList& other);
-    DLinkedList& operator=(const DLinkedList& other);
+    SLinkedList();
+    ~SLinkedList();
+    SLinkedList(const SLinkedList& other);
+    SLinkedList& operator=(const SLinkedList& other);
 
     void push_front(const T& value);
     void push_back(const T& value);
@@ -30,8 +30,6 @@ public:
 
     T& front();
     const T& front() const;
-    T& back();
-    const T& back() const;
     std::size_t size() const noexcept;
     bool empty() const noexcept;
     bool contains(const T& value) const;
@@ -39,107 +37,189 @@ public:
     void clear();
 
 private:
-    DNode<T>* header_;
-    DNode<T>* trailer_;
+    SNode<T>* head_;
     std::size_t size_;
 };
 
 template <typename T>
-DLinkedList<T>::DLinkedList() : size_(0) {
-    header_ = new DNode<T>(T(), nullptr, nullptr);
-    trailer_ = new DNode<T>(T(), nullptr, nullptr);
-    header_->next = trailer_;
-    trailer_->prev = header_;
-}
+SLinkedList<T>::SLinkedList()
+    : head_(nullptr), size_(0) {}
 
-//TODO: Implement the destructor, copy constructor, assignment operator, and other member functions for the DLinkedList class.
+// Destructor
 template <typename T>
-DLinkedList<T>::~DLinkedList() {
+SLinkedList<T>::~SLinkedList() {
     clear();
-
 }
 
-//TODO: Implement the copy constructor for the DLinkedList class.
+// Copy Constructor
 template <typename T>
-DLinkedList<T>::DLinkedList(const DLinkedList& other) : size_(0) {
-
+SLinkedList<T>::SLinkedList(const SLinkedList& other)
+    : head_(nullptr), size_(0) {
+    try {
+        for (SNode<T>* current = other.head_;
+             current != nullptr;
+             current = current->next) {
+            push_back(current->value);
+        }
+    } catch (...) {
+        clear();
+        throw;
+    }
 }
 
-// TODO: Implement the assignment operator for the DLinkedList class.
+// Assignment Operator
 template <typename T>
-DLinkedList<T>& DLinkedList<T>::operator=(const DLinkedList& other) {
+SLinkedList<T>& SLinkedList<T>::operator=(
+    const SLinkedList& other) {
 
+    if (this != &other) {
+        SLinkedList<T> temp(other);
+        std::swap(head_, temp.head_);
+        std::swap(size_, temp.size_);
+    }
+
+    return *this;
 }
 
-//TODO: Implement the push_front function for the DLinkedList class.
+// Insert at Front
 template <typename T>
-void DLinkedList<T>::push_front(const T& value) {
-
+void SLinkedList<T>::push_front(const T& value) {
+    head_ = new SNode<T>(value, head_);
+    ++size_;
 }
 
-//TODO: Implement the push_back function for the DLinkedList class.
+// Insert at Back
 template <typename T>
-void DLinkedList<T>::push_back(const T& value) {
+void SLinkedList<T>::push_back(const T& value) {
+    SNode<T>* newNode = new SNode<T>(value);
 
+    if (empty()) {
+        head_ = newNode;
+    } else {
+        SNode<T>* current = head_;
+
+        while (current->next != nullptr) {
+            current = current->next;
+        }
+
+        current->next = newNode;
+    }
+
+    ++size_;
 }
 
-
-//TODO: Implement the pop_front function for the DLinkedList class.
+// Remove from Front
 template <typename T>
-bool DLinkedList<T>::pop_front() {
+bool SLinkedList<T>::pop_front() {
+    if (empty()) {
+        return false;
+    }
 
+    SNode<T>* temp = head_;
+    head_ = head_->next;
+
+    delete temp;
+    --size_;
+
+    return true;
 }
 
-//TODO: Implement the pop_back function for the DLinkedList class.
+// Remove from Back
 template <typename T>
-bool DLinkedList<T>::pop_back() {
+bool SLinkedList<T>::pop_back() {
+    if (empty()) {
+        return false;
+    }
 
+    if (head_->next == nullptr) {
+        delete head_;
+        head_ = nullptr;
+    } else {
+        SNode<T>* current = head_;
+
+        while (current->next->next != nullptr) {
+            current = current->next;
+        }
+
+        delete current->next;
+        current->next = nullptr;
+    }
+
+    --size_;
+    return true;
 }
 
-//TODO: Implement the front function for the DLinkedList class
+// Get Front Element
 template <typename T>
-T& DLinkedList<T>::front() {
+T& SLinkedList<T>::front() {
+    if (empty()) {
+        throw std::out_of_range("SLinkedList is empty");
+    }
 
+    return head_->value;
 }
 
+// Get Front Element (Const)
 template <typename T>
-const T& DLinkedList<T>::front() const {
-//TODO: Implement the const version of the front function for the DLinkedList class
+const T& SLinkedList<T>::front() const {
+    if (empty()) {
+        throw std::out_of_range("SLinkedList is empty");
+    }
+
+    return head_->value;
 }
 
+// Get Size
 template <typename T>
-T& DLinkedList<T>::back() {
-//TODO: Implement the back function for the DLinkedList class
+std::size_t SLinkedList<T>::size() const noexcept {
+    return size_;
 }
 
+// Check if Empty
 template <typename T>
-const T& DLinkedList<T>::back() const {
-//TODO: Implement the const version of the back function for the DLinkedList class
+bool SLinkedList<T>::empty() const noexcept {
+    return size_ == 0;
 }
 
+// Search for Value
 template <typename T>
-std::size_t DLinkedList<T>::size() const noexcept {
-//TODO: Implement the size function for the DLinkedList class
+bool SLinkedList<T>::contains(const T& value) const {
+    SNode<T>* current = head_;
 
+    while (current != nullptr) {
+        if (current->value == value) {
+            return true;
+        }
+
+        current = current->next;
+    }
+
+    return false;
 }
 
+// Convert List to Vector
 template <typename T>
-bool DLinkedList<T>::empty() const noexcept {
-//TODO: Implement the empty function for the DLinkedList class
+std::vector<T> SLinkedList<T>::to_vector() const {
+    std::vector<T> values;
+    values.reserve(size_);
 
+    for (SNode<T>* current = head_;
+         current != nullptr;
+         current = current->next) {
+        values.push_back(current->value);
+    }
+
+    return values;
 }
 
+// Clear Entire List
 template <typename T>
-bool DLinkedList<T>::contains(const T& value) const {
-//TODO: Implement the contains function for the DLinkedList class
-}
+void SLinkedList<T>::clear() {
+    while (head_ != nullptr) {
+        SNode<T>* temp = head_;
+        head_ = head_->next;
+        delete temp;
+    }
 
-template <typename T>
-std::vector<T> DLinkedList<T>::to_vector() const {
-// TODO: Implement the to_vector function for the DLinkedList class
-}
-
-template <typename T>
-void DLinkedList<T>::clear() {
-// TDOO: Implement the clear function for the DLinkedList class
+    size_ = 0;
 }
